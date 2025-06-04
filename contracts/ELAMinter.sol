@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./ELAToken/ELACoin.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./ELAToken/IELACoin.sol";
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
@@ -17,10 +17,8 @@ contract ELAMinter is ReentrancyGuard {
         bytes targetData;
     }
     mapping(bytes32 => bool) public completed;
-    IELACoin public elaCoin;
-
+    IELACoin public constant ELACoin = IELACoin(0x0000000000000000000000000000000000000065);
     constructor() {
-        elaCoin = new ELACoin("Elastos", "ELA");
     }
 
     function getRechargeData(bytes32 elaHash) public view returns (RechargeData[] memory) {
@@ -111,8 +109,8 @@ contract ELAMinter is ReentrancyGuard {
             require(targetAmount >= fee, "NotEnoughFee");
             require(targetAddress != address(0), "InvalidAddress");
             bytes memory targetData = rechargeDataArray[i].targetData;
-            elaCoin.mint(targetAddress, targetAmount - fee, targetData);
-            elaCoin.mint(msg.sender, fee, "");
+            ELACoin.mint(targetAddress, targetAmount - fee, targetData);
+            ELACoin.mint(msg.sender, fee, "");
 
             emit Recharged(elaHash, targetAddress, targetAmount - fee);
             emit Recharged(elaHash, msg.sender, fee);
@@ -120,11 +118,11 @@ contract ELAMinter is ReentrancyGuard {
     }
 
     function withdraw(string memory _addr, uint256 _amount, uint256 _fee) public nonReentrant {
-        uint256 balance = elaCoin.balanceOf(msg.sender);
+        uint256 balance = ELACoin.balanceOf(msg.sender);
         require(balance >= _amount + _fee, "balance not enough");
         require(_fee >= 10000 && _fee % 10000 == 0, "ErrorFee");
         require(_amount % 10000 == 0 && _amount > _fee && _amount - _fee >= _fee, "ErrorAmount");
-        elaCoin.burn(msg.sender, _amount + _fee);
+        ELACoin.burn(msg.sender, _amount + _fee);
         emit PayloadReceived(_addr, _amount, _amount - _fee, msg.sender);
     }
 

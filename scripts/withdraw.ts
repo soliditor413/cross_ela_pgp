@@ -47,6 +47,7 @@ async function main() {
       console.log(`Gas used: ${receipt.gasUsed.toString()}`);
     }
     console.log("Recharge completed successfully!");
+    
     await verifiyBalance();
     
   } catch (error) {
@@ -61,9 +62,11 @@ async function main() {
 async function verifiyBalance() {
   const ELAMINTER_ADDRESS = await readConfig(network.name, "elaminter"); // Replace with your deployed ELAMinter contract address
   const elaminter = await ethers.getContractAt("ELAMinter", ELAMINTER_ADDRESS);
-  const ELACoin_ADDRESS = await elaminter.elaCoin();
+  const ELACoin_ADDRESS = await elaminter.ELACoin();
   console.log(`ELACoin address: ${ELACoin_ADDRESS}`);
   const elacoin = await ethers.getContractAt("IELACoin", ELACoin_ADDRESS);
+  const balance = await elacoin.balanceOf("0x0262aB0ED65373cC855C34529fDdeAa0e686D913");
+  console.log(`Balance of signer: ${balance}`);
   
   for (let i = 0; i < 10; i++) {
     let address ="0x000000000000000000000000000000000000000" + i.toString(16);

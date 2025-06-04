@@ -11,10 +11,7 @@ import "./IELACoin.sol";
 contract ELACoin is IELACoin, ERC20 {
     address public constant MINTER = 0x0000000000000000000000000000000000000064;
     event Mintted(address indexed to, uint256 amount, bytes data);
-    constructor(
-        string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) {
+    constructor() ERC20("Elastos", "ELA") {
     }
 
     /**
