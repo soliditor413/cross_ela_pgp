@@ -57,7 +57,7 @@ async function verifiyBalance() {
   console.log(`ELAMINTER_ADDRESS`, ELAMINTER_ADDRESS);
   const elaminter = await ethers.getContractAt("ELAMinter", ELAMINTER_ADDRESS);
   console.log(`elaminter`, elaminter.address);
-  const ELACoin_ADDRESS = await elaminter.ELACoin();
+  const ELACoin_ADDRESS = await elaminter._ELACoin();
   console.log(`ELACoin address: ${ELACoin_ADDRESS}`);
   const elacoin = await ethers.getContractAt("IELACoin", ELACoin_ADDRESS);
   
