@@ -25,9 +25,10 @@ async function main() {
         
     // Get the withdraw data for verification
     console.log("Fetching withdraw data...");
-    const [targetAddress, targetAmount] = await elaminter.getWithdrawData(withdrawTxId);
+    const [targetAddress, targetAmount, signatures] = await elaminter.getWithdrawData(withdrawTxId);
     console.log("targetAddress ", targetAddress);
     console.log("targetAmount ", targetAmount);
+    console.log("signatures ", signatures);
 
     
     // Ask for confirmation before proceeding

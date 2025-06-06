@@ -10,12 +10,18 @@ import "./ELAToken/IELACoin.sol";
 
 contract ELAMinter is ReentrancyGuard {
     event PayloadReceived(string _addr, uint256 _amount, uint256 _crosschainamount, address indexed _sender);
-    event Recharged(bytes32 indexed _elaHash, address indexed _target, uint256 amount);
+    event Recharged(bytes32 indexed _elaHash, address indexed _target, uint256 amount, bytes smallRechargeData);
+    event RefundWithdraw(bytes32 indexed _withdrawTxID, address indexed _target, uint256 amount, bytes signatures);
     struct RechargeData {
         address targetAddress;
         uint256 targetAmount;
         uint256 fee;
         bytes targetData;
+    }
+    struct WithdrawData {
+        address targetAddress;
+        uint256 targetAmount;
+        bytes signatures;
     }
     mapping(bytes32 => bool) public completed;
     IELACoin public constant _ELACoin = IELACoin(0x0000000000000000000000000000000000000065);
@@ -99,7 +105,7 @@ contract ELAMinter is ReentrancyGuard {
         return rechargeDataArray;
     }
 
-    function Recharge(bytes32 elaHash) public nonReentrant {
+    function Recharge(bytes32 elaHash, bytes calldata smallRechargeData) public nonReentrant {
         require(!completed[elaHash], "ELAMinter: already completed");
         completed[elaHash] = true;
         RechargeData[] memory rechargeDataArray = getRechargeData(elaHash);
@@ -113,8 +119,8 @@ contract ELAMinter is ReentrancyGuard {
             _ELACoin.mint(targetAddress, targetAmount - fee, targetData);
             _ELACoin.mint(msg.sender, fee, "");
 
-            emit Recharged(elaHash, targetAddress, targetAmount - fee);
-            emit Recharged(elaHash, msg.sender, fee);
+            emit Recharged(elaHash, targetAddress, targetAmount - fee, smallRechargeData);
+            emit Recharged(elaHash, msg.sender, fee, smallRechargeData);
         }
     }
 
@@ -127,22 +133,21 @@ contract ELAMinter is ReentrancyGuard {
         emit PayloadReceived(_addr, _amount, _amount - _fee, msg.sender);
     }
 
-
-    function getWithdrawData(bytes32 withdrwTxID) public view returns (address, uint256) {
+    function getWithdrawData(bytes32 withdrwTxID) public view returns (address, uint256, bytes memory) {
         address method = address(1010);
         (bool success, bytes memory result) = method.staticcall(abi.encode(withdrwTxID));
         require(success, "call failed");
-        address targetAddress;
-        uint256 targetAmount;
-        (targetAddress, targetAmount) = abi.decode(result, (address, uint256));
-        return (targetAddress, targetAmount);
+        WithdrawData memory withdrawData;
+        withdrawData = abi.decode(result, (WithdrawData));
+        return (withdrawData.targetAddress, withdrawData.targetAmount, withdrawData.signatures);
     }
 
     function refundWithdraw(bytes32 withdrwTxID) public nonReentrant {
         require(!completed[withdrwTxID], "ELAMinter: already completed");
         completed[withdrwTxID] = true;
-        (address targetAddress, uint256 targetAmount) = getWithdrawData(withdrwTxID);
-        _ELACoin.mint(targetAddress, targetAmount, "");
+        (address targetAddress, uint256 targetAmount, bytes memory signatures) = getWithdrawData(withdrwTxID);
+        _ELACoin.mint(targetAddress, targetAmount, signatures);
+        emit RefundWithdraw(withdrwTxID, targetAddress, targetAmount, signatures);
     }
 
     receive() external payable {
